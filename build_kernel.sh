@@ -20,10 +20,11 @@ DEVICE_NAME="$1"
 
 export MAIN_DEFCONFIG="arch/arm64/configs/vendor/kona-perf_defconfig"
 export ACTUAL_MAIN_DEFCONFIG="vendor/kona-perf_defconfig"
+export DEVICE_IMPORT="umi"
 export DEVICE_DEFCONFIG="vendor/xiaomi/sm8250-common.config vendor/xiaomi/${DEVICE_IMPORT}.config"
+export COMMON_DEFCONFIG="vendor/debugfs.config"
 export KERNEL_VERSION="4.19"
 export KBUILD_BUILD_USER="kamilek-compile"
-export COMMON_DEFCONFIG="vendor/debugfs.config"
 
 ENABLE_KSU=0
 TARGET_OS="both"
@@ -189,9 +190,26 @@ build_target() {
         sed -i 's/\/\/39 01 00 00 11 00 03 51 03 FF/39 01 00 00 11 00 03 51 03 FF/g' ${DTS_SOURCE}/dsi-panel-j2-p2-1-38-0c-0a-dsc-cmd.dtsi || true
     fi
 
-   echo "[*] Making defconfig: ${ACTUAL_MAIN_DEFCONFIG}..."
-   make "${MAKE_OPTS[@]}" "${ACTUAL_MAIN_DEFCONFIG}" 
+   echo "==========================================="
+echo " Generating Kernel Configuration"
+echo "==========================================="
 
+echo "[*] Base defconfig      : ${ACTUAL_MAIN_DEFCONFIG}"
+echo "[*] Common fragment     : ${COMMON_DEFCONFIG}"
+echo "[*] Device fragments    : ${DEVICE_DEFCONFIG}"
+
+make "${MAKE_OPTS[@]}" "${ACTUAL_MAIN_DEFCONFIG}"
+
+for cfg in ${COMMON_DEFCONFIG} ${DEVICE_DEFCONFIG}; do
+    echo "[*] Merging ${cfg}"
+    ./scripts/kconfig/merge_config.sh \
+        -m \
+        -O "${OUT_DIR}" \
+        "${OUT_DIR}/.config" \
+        "arch/arm64/configs/${cfg}"
+done
+
+make "${MAKE_OPTS[@]}" olddefconfig
     # ----------------------------------------------------
     # Configuration tweaks
     # ----------------------------------------------------
