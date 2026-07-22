@@ -17,14 +17,13 @@ if [ -z "$1" ]; then
 fi
 
 DEVICE_NAME="$1"
-DEFCONFIG="${DEVICE_NAME}_defconfig"
-DEFCONFIG_PATH="arch/arm64/configs/${DEFCONFIG}"
 
-if [ ! -f "$DEFCONFIG_PATH" ]; then
-    echo "[!] Error: Defconfig not found at $DEFCONFIG_PATH"
-    echo "[!] Please verify the device name and try again."
-    exit 1
-fi
+export MAIN_DEFCONFIG="arch/arm64/configs/vendor/kona-perf_defconfig"
+export ACTUAL_MAIN_DEFCONFIG="vendor/kona-perf_defconfig"
+export DEVICE_DEFCONFIG="vendor/xiaomi/sm8250-common.config vendor/xiaomi/${DEVICE_IMPORT}.config"
+export KERNEL_VERSION="4.19"
+export KBUILD_BUILD_USER="kamilek-compile"
+export COMMON_DEFCONFIG="vendor/debugfs.config"
 
 ENABLE_KSU=0
 TARGET_OS="both"
@@ -190,8 +189,8 @@ build_target() {
         sed -i 's/\/\/39 01 00 00 11 00 03 51 03 FF/39 01 00 00 11 00 03 51 03 FF/g' ${DTS_SOURCE}/dsi-panel-j2-p2-1-38-0c-0a-dsc-cmd.dtsi || true
     fi
 
-    echo "[*] Making defconfig: ${DEFCONFIG}..."
-    make "${MAKE_OPTS[@]}" "${DEFCONFIG}"
+   echo "[*] Making defconfig: ${ACTUAL_MAIN_DEFCONFIG}..."
+   make "${MAKE_OPTS[@]}" "${ACTUAL_MAIN_DEFCONFIG}" 
 
     # ----------------------------------------------------
     # Configuration tweaks
