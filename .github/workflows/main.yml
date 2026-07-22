@@ -61,12 +61,10 @@ jobs:
           kernel-ccache-${{ inputs.device }}-
           kernel-ccache-
 
-    - name: Setup Toolchain (Neutron Clang 18)
+    - name: Setup Toolchain (LineageOS Clang r416183b)
       run: |
-         mkdir -p $HOME/zyc-clang
-         cd $HOME/zyc-clang
-         wget -q https://github.com/Neutron-Toolchains/clang-build-catalogue/releases/download/05012024/neutron-clang-05012024.tar.zst
-         tar --zstd -xvf neutron-clang-05012024.tar.zst
+          git clone --depth=1 https://github.com/LineageOS/android_prebuilts_clang_kernel_linux-x86_clang-r416183b.git $HOME/zyc-clang
+          echo "$HOME/zyc-clang/bin" >> $GITHUB_PATH
          
     - name: Build Kernel
       run: |
