@@ -84,7 +84,7 @@ if [ "$1" == "continue" ]; then
     exit
 fi
 
-DEFCONFIG="vendor/${TARGET_DEVICE}_defconfig"
+DEFCONFIG="vendor/kona-perf_defconfig"
 
 if [ ! -f "arch/arm64/configs/${DEFCONFIG}" ]; then
     echo "No target device [${TARGET_DEVICE}] found."
