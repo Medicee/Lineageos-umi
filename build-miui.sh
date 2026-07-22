@@ -190,7 +190,26 @@ sed -i 's/\/\/39 01 00 00 01 00 03 51 03 FF/39 01 00 00 01 00 03 51 03 FF/g' ${d
 sed -i 's/\/\/39 01 00 00 11 00 03 51 03 FF/39 01 00 00 11 00 03 51 03 FF/g' ${dts_source}/dsi-panel-j2-p2-1-38-0c-0a-dsc-cmd.dtsi
 
 
-make $MAKE_ARGS ${DEFCONFIG}
+DEVICE_IMPORT="${TARGET_DEVICE}"
+
+export MAIN_DEFCONFIG="arch/arm64/configs/vendor/kona-perf_defconfig"
+export ACTUAL_MAIN_DEFCONFIG="vendor/kona-perf_defconfig"
+export DEVICE_DEFCONFIG="vendor/xiaomi/sm8250-common.config vendor/xiaomi/${DEVICE_IMPORT}.config"
+export COMMON_DEFCONFIG="vendor/debugfs.config"
+export KERNEL_VERSION="4.19"
+export KBUILD_BUILD_USER="kamilek-compile"
+
+if [ ! -f "${MAIN_DEFCONFIG}" ]; then
+    echo "Missing ${MAIN_DEFCONFIG}"
+    exit 1
+fi
+
+for cfg in ${COMMON_DEFCONFIG} ${DEVICE_DEFCONFIG}; do
+    if [ ! -f "arch/arm64/configs/${cfg}" ]; then
+        echo "Missing config fragment: ${cfg}"
+        exit 1
+    fi
+done
 
 if [ $KSU_ENABLE -eq 1 ]; then
     scripts/config --file out/.config \
