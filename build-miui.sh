@@ -5,7 +5,7 @@
 # Ensure the script exits on error
 set -e
 
-TOOLCHAIN_PATH=$HOME/zyc-clang/bin
+TOOLCHAIN_PATH=$HOME/toolchains/clang/bin
 GIT_COMMIT_ID=$(git rev-parse --short=8 HEAD)
 TARGET_DEVICE=$1
 
@@ -58,20 +58,20 @@ echo "CCACHE_DIR: [$CCACHE_DIR]"
 
 
 MAKE_ARGS="ARCH=arm64 \
-           SUBARCH=arm64 \
-           O=out \
-           CC=clang \
-           HOSTCC=clang \
-           CLANG_TRIPLE=aarch64-linux-gnu- \
-           CROSS_COMPILE=aarch64-linux-gnu- \
-           CROSS_COMPILE_ARM32=arm-linux-gnueabi- \
-           CROSS_COMPILE_COMPAT=arm-linux-gnueabi- \
-           LD=ld.lld \
-           AR=llvm-ar \
-           NM=llvm-nm \
-           OBJCOPY=llvm-objcopy \
-           OBJDUMP=llvm-objdump \
-           STRIP=llvm-strip"
+SUBARCH=arm64 \
+O=out \
+CC=clang \
+HOSTCC=clang \
+CLANG_TRIPLE=aarch64-linux-android- \
+CROSS_COMPILE=aarch64-linux-android- \
+CROSS_COMPILE_ARM32=arm-linux-androideabi- \
+CROSS_COMPILE_COMPAT=arm-linux-androideabi- \
+LD=ld.lld \
+AR=llvm-ar \
+NM=llvm-nm \
+OBJCOPY=llvm-objcopy \
+OBJDUMP=llvm-objdump \
+STRIP=llvm-strip"
 
 
 if [ "$1" == "j1" ]; then
