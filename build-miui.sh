@@ -120,10 +120,14 @@ fi
 
 echo "Cleaning..."
 
-rm -rf out/
-rm -rf anykernel/
+make mrproper
 
-echo "Clone AnyKernel3 for packing kernel (repo: https://github.com/AstideLabs/AnyKernel3)"
+rm -rf out
+mkdir -p out
+
+rm -rf anykernel
+
+echo "Clone AnyKernel3 for packing kernel..."
 git clone https://github.com/AstideLabs/AnyKernel3 -b master --single-branch --depth=1 anykernel
 
 # ------------- Building for MIUI -------------
