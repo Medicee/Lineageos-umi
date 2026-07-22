@@ -120,10 +120,10 @@ fi
 
 echo "Cleaning..."
 
-make mrproper
-
 rm -rf out
 mkdir -p out
+
+make $MAKE_ARGS clean
 
 rm -rf anykernel
 
