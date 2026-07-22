@@ -172,6 +172,18 @@ export COMMON_DEFCONFIG="vendor/debugfs.config"
 export KERNEL_VERSION="4.19"
 export KBUILD_BUILD_USER="kamilek-compile"
 
+echo "Generating base config..."
+
+make $MAKE_ARGS ${ACTUAL_MAIN_DEFCONFIG}
+
+scripts/kconfig/merge_config.sh \
+    -m out/.config \
+    arch/arm64/configs/${COMMON_DEFCONFIG} \
+    arch/arm64/configs/vendor/xiaomi/sm8250-common.config \
+    arch/arm64/configs/vendor/xiaomi/${DEVICE_IMPORT}.config
+
+make $MAKE_ARGS olddefconfig
+
 if [ ! -f "${MAIN_DEFCONFIG}" ]; then
     echo "Missing ${MAIN_DEFCONFIG}"
     exit 1
