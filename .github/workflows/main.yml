@@ -1,70 +1,65 @@
-name: Build Kernel
+name: APT-los-stock-kernel 
 
 on:
   workflow_dispatch:
     inputs:
       device:
-        description: 'Target Device Code (设备代号)'
+        description: 'Target Device Codename (e.g., lmi, umi)'
         required: true
-        default: 'lmi'
+        default: 'umi'
         type: choice
         options:
-          - alioth
-          - apollo
-          - cas
-          - cmi
-          - dagu
-          - elish
-          - enuma
-          - lmi
-          - munch
-          - pipa
           - psyche
           - thyme
           - umi
+
+      script:
+        description: 'Select Build Script'
+        required: true
+        default: 'build.sh'
+        type: choice
+        options:
+          - build.sh
+          - build-miui.sh
+
       ksu:
-        description: 'Enable KernelSU (ReSukiSU)'
+        description: 'Enable KernelSU (ReSukiSU-SuSFS)'
         required: true
         type: boolean
-        default: false
-      target_os:
-        description: 'Target OS (目标系统)'
-        required: true
-        type: choice
-        default: 'both'
-        options:
-          - aosp
-          - miui
-          - both
+        default: true
 
 jobs:
-  build-kernel:
-    name: Build ${{ github.event.inputs.device }} | KSU:${{ github.event.inputs.ksu }} | OS:${{ github.event.inputs.target_os }}
+  build:
+    name: Build Kernel for ${{ inputs.device }} (${{ inputs.script }}) (${{ inputs.ksu && 'KSU' || 'NoKSU' }})
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v7
+    - name: Checkout Source
+      uses: actions/checkout@v6
       with:
         fetch-depth: 1
 
-    - name: Set up Environment
+    - name: Cleanup Disk Space
+      run: |
+        sudo rm -rf /usr/share/dotnet
+        sudo rm -rf /opt/ghc
+        sudo rm -rf "/usr/local/share/boost"
+        sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+
+    - name: Install Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y bc bison build-essential ccache curl flex gawk \
-          git gnupg gperf imagemagick libncurses-dev \
-          lib32readline-dev lib32z1-dev liblz4-tool \
-          libsdl1.2-dev libssl-dev libxml2 libxml2-utils lzop pngcrush rsync \
-          schedtool squashfs-tools xsltproc zip zlib1g-dev python3
-          
-    - name: Cache ccache
-      uses: actions/cache@v6
+        sudo apt-get install -y build-essential git curl wget bison flex zip bc cpio libssl-dev ccache python-is-python3
+
+    - name: Setup Cache (ccache)
+      uses: actions/cache@v5
       with:
         path: ~/.cache/ccache_mikernel
-        key: ${{ runner.os }}-kernel-ccache-${{ github.event.inputs.device }}-${{ github.run_id }}
+        key: kernel-ccache-${{ inputs.device }}-${{ inputs.script }}-${{ github.run_id }}
         restore-keys: |
-          ${{ runner.os }}-kernel-ccache-${{ github.event.inputs.device }}-
-          ${{ runner.os }}-kernel-ccache-
+          kernel-ccache-${{ inputs.device }}-${{ inputs.script }}-
+          kernel-ccache-${{ inputs.device }}-
+          kernel-ccache-
 
     - name: Setup Toolchain (Neutron Clang 18)
       run: |
@@ -72,27 +67,24 @@ jobs:
          cd $HOME/zyc-clang
          wget -q https://github.com/Neutron-Toolchains/clang-build-catalogue/releases/download/05012024/neutron-clang-05012024.tar.zst
          tar --zstd -xvf neutron-clang-05012024.tar.zst
-
-    - name: Run Build Script
+         
+    - name: Build Kernel
       run: |
-        chmod +x build_kernel.sh
+        chmod +x build.sh build-miui.sh
         
-        ARGS="${{ github.event.inputs.device }}"
-        
-        if [ "${{ github.event.inputs.ksu }}" == "true" ]; then
-          ARGS="$ARGS ksu"
-        fi
-        
-        if [ "${{ github.event.inputs.target_os }}" != "both" ]; then
-          ARGS="$ARGS ${{ github.event.inputs.target_os }}"
-        fi
-        
-        echo "Executing command: ./build_kernel.sh $ARGS"
-        ./build_kernel.sh $ARGS
+        echo "Using script: ${{ inputs.script }}"
 
-    - name: Upload Flashable ZIP
-      uses: actions/upload-artifact@v7
+        if [ "${{ inputs.ksu }}" == "true" ]; then
+          echo "Building with KernelSU..."
+          bash ${{ inputs.script }} ${{ inputs.device }} ksu
+        else
+          echo "Building without KernelSU..."
+          bash ${{ inputs.script }} ${{ inputs.device }}
+        fi
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v6
       with:
-        name: APTKernel-${{ github.event.inputs.device }}-${{ github.event.inputs.target_os }}-${{ github.run_id }}
-        path: APTKernel_*.zip
-        compression-level: 0 # 已经被 zip 压缩过，无需再二次压缩
+        name: Kernel-${{ inputs.device }}-${{ inputs.script }}-${{ inputs.ksu && 'KSU' || 'NoKSU' }}-${{ github.run_number }}
+        path: ./*.zip
+        if-no-files-found: error
